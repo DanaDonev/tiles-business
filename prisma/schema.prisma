@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String     @id @default(cuid())
+  email String     @unique
+  password String
+  name  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  likes Like[]
+  contacts Contact[]
+}
+
+model Tile {
+  id    String     @id @default(cuid())
+  name  String
+  type  TileType
+  description String
+  dimensions String
+  color String
+  price Float
+  imageUrl String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  likes Like[]
+  
+  @@index([type])
+  @@index([color])
+}
+
+enum TileType {
+  GENERAL
+  BATHROOM
+  KITCHEN
+  OUTDOORS
+}
+
+model Like {
+  id    String     @id @default(cuid())
+  userId String
+  tileId String
+  createdAt DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tile Tile @relation(fields: [tileId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, tileId])
+  @@index([userId])
+  @@index([tileId])
+}
+
+model Contact {
+  id    String     @id @default(cuid())
+  email String
+  name  String
+  subject String
+  message String
+  userId String?
+  createdAt DateTime @default(now())
+  
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+}
