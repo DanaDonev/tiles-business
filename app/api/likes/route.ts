@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { db, supabase } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
@@ -24,11 +24,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if tile exists
-    const tile = await prisma.tile.findUnique({
-      where: { id: tileId }
-    })
+    const { data: tile, error: tileError } = await db.tiles()
+      .select('id')
+      .eq('id', tileId)
+      .single()
 
-    if (!tile) {
+    if (tileError || !tile) {
       return NextResponse.json(
         { error: 'Tile not found' },
         { status: 404 }
@@ -36,14 +37,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if like already exists
-    const existingLike = await prisma.like.findUnique({
-      where: {
-        userId_tileId: {
-          userId: session.user.id,
-          tileId
-        }
-      }
-    })
+    const { data: existingLike, error: likeError } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('userId', session.user.id)
+      .eq('tileId', tileId)
+      .single()
 
     if (existingLike) {
       return NextResponse.json(
@@ -53,12 +52,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create like
-    await prisma.like.create({
-      data: {
+    const { error: createError } = await supabase
+      .from('likes')
+      .insert({
         userId: session.user.id,
         tileId
-      }
-    })
+      })
+
+    if (createError) {
+      throw createError
+    }
 
     return NextResponse.json({ message: 'Tile liked successfully' })
   } catch (error) {
@@ -91,14 +94,15 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete like
-    await prisma.like.delete({
-      where: {
-        userId_tileId: {
-          userId: session.user.id,
-          tileId
-        }
-      }
-    })
+    const { error } = await supabase
+      .from('likes')
+      .delete()
+      .eq('userId', session.user.id)
+      .eq('tileId', tileId)
+
+    if (error) {
+      throw error
+    }
 
     return NextResponse.json({ message: 'Like removed successfully' })
   } catch (error) {

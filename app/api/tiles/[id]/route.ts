@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { db, supabase } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
@@ -10,29 +10,35 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions)
 
-    const tile = await prisma.tile.findUnique({
-      where: { id: params.id },
-      include: {
-        likes: session?.user?.id
-          ? {
-              where: { userId: session.user.id },
-              select: { id: true }
-            }
-          : false
-      }
-    })
+    const { data: tile, error } = await db.tiles()
+      .select('*')
+      .eq('id', params.id)
+      .single()
 
-    if (!tile) {
+    if (error || !tile) {
       return NextResponse.json(
         { error: 'Tile not found' },
         { status: 404 }
       )
     }
 
+    // Check if user has liked this tile
+    let liked = false
+    if (session?.user?.id) {
+      const { data: like } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('userId', session.user.id)
+        .eq('tileId', params.id)
+        .single()
+
+      liked = !!like
+    }
+
     return NextResponse.json({
       tile: {
         ...tile,
-        liked: session?.user?.id && tile.likes && (tile.likes as any).length > 0
+        liked
       }
     })
   } catch (error) {

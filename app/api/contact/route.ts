@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/supabaseClient'
 
 // Rate limiting - simple in-memory store (not suitable for production)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
@@ -97,15 +97,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Save contact to database
-    await prisma.contact.create({
-      data: {
+    // Save contact to database using Supabase
+    const { error } = await db.contacts()
+      .insert({
         name,
         email,
         subject,
         message
-      }
-    })
+      })
+
+    if (error) {
+      throw error
+    }
 
     // Send email
     const emailSent = await sendEmail(email, subject, message, name)

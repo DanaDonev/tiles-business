@@ -1,5 +1,4 @@
-import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import { supabaseServer, db } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -21,32 +20,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
+    // Create user with Supabase Auth
+    const { data: authUser, error: authError } = await supabaseServer.auth.admin.createUser({
+      email,
+      password,
+      user_metadata: { name }
     })
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
-      )
+    if (authError) {
+      // Check if user already exists
+      if (authError.message.includes('already registered')) {
+        return NextResponse.json(
+          { error: 'User with this email already exists' },
+          { status: 409 }
+        )
+      }
+      throw authError
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
+    // Create user profile in users table
+    const { data: userProfile, error: profileError } = await db.users()
+      .insert({
+        id: authUser.user.id,
         email,
-        password: hashedPassword
-      }
-    })
+        name
+      })
+      .select()
+      .single()
+
+    if (profileError) {
+      throw profileError
+    }
 
     return NextResponse.json(
-      { message: 'User created successfully', user: { id: user.id, email: user.email, name: user.name } },
+      {
+        message: 'User created successfully',
+        user: {
+          id: userProfile.id,
+          email: userProfile.email,
+          name: userProfile.name
+        }
+      },
       { status: 201 }
     )
   } catch (error) {

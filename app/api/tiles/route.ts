@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import { db, supabase } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
@@ -12,38 +12,45 @@ export async function GET(request: NextRequest) {
 
     const session = await getServerSession(authOptions)
 
-    // Build where clause
-    const where: any = {}
+    // Build query with Supabase
+    let query = db.tiles().select('*')
 
+    // Apply filters
     if (type.length > 0 && type[0]) {
-      where.type = { in: type }
+      query = query.in('type', type)
     }
 
     if (color) {
-      where.color = { equals: color, mode: 'insensitive' }
+      query = query.ilike('color', color)
     }
 
     if (dimensions) {
-      where.dimensions = { equals: dimensions, mode: 'insensitive' }
+      query = query.ilike('dimensions', dimensions)
     }
 
-    // Fetch tiles
-    const tiles = await prisma.tile.findMany({
-      where,
-      include: {
-        likes: session?.user?.id
-          ? {
-              where: { userId: session.user.id },
-              select: { id: true }
-            }
-          : false
+    const { data: tiles, error } = await query
+
+    if (error) {
+      throw error
+    }
+
+    // Get likes for current user if authenticated
+    let userLikes: any[] = []
+    if (session?.user?.id) {
+      const { data: likes, error: likesError } = await supabase
+        .from('likes')
+        .select('tileId')
+        .eq('userId', session.user.id)
+
+      if (!likesError && likes) {
+        userLikes = likes.map(like => like.tileId)
       }
-    })
+    }
 
     // Format response
     const formattedTiles = tiles.map(tile => ({
       ...tile,
-      liked: session?.user?.id && tile.likes && (tile.likes as any).length > 0
+      liked: userLikes.includes(tile.id)
     }))
 
     return NextResponse.json({ tiles: formattedTiles })
