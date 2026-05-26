@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <>
+    <div>
       {/* Hero Section */}
       <section className="gradient-primary text-white py-20 md:py-32">
         <div className="container-custom text-center">
@@ -112,6 +112,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-    </>
+    </div>
   )
 }
