@@ -58,21 +58,28 @@ export const authOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
+      
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        const email = credentials?.email;
+        const password = credentials?.password;
+
+        if (typeof email !== "string" || typeof password !== "string") {
           throw new Error("Email and password required");
         }
+        // if (!credentials?.email || !credentials?.password) {
+        //   throw new Error("Email and password required");
+        // }
 
         const { data, error } = await supabaseServer.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
+          email,
+          password
         });
 
         if (error || !data.user) {
           throw new Error("Invalid email or password");
         }
 
-        const { data: userProfile } = await db
+        const { data: userProfile } = await supabaseServer
           .from("users")
           .select("*")
           .eq("id", data.user.id)

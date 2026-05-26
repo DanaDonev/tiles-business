@@ -1,6 +1,6 @@
-import { db, supabase } from '@/lib/supabaseClient'
+import { db, supabase, supabaseServer } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from "@/lib/auth"
+import { auth } from "@/auth";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     // Get likes for current user if authenticated
     let userLikes: any[] = []
     if (session?.user?.id) {
-      const { data: likes, error: likesError } = await supabase
+      const { data: likes, error: likesError } = await supabaseServer
         .from('likes')
         .select('tileId')
         .eq('userId', session.user.id)
