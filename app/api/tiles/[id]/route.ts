@@ -1,14 +1,13 @@
 import { db, supabase } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth();
 
     const { data: tile, error } = await db.tiles()
       .select('*')

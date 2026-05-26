@@ -1,7 +1,6 @@
 import { db, supabase } from '@/lib/supabaseClient'
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from "@/lib/auth"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +9,7 @@ export async function GET(request: NextRequest) {
     const color = searchParams.get('color')
     const dimensions = searchParams.get('dimensions')
 
-    const session = await getServerSession(authOptions)
+    const session = await auth();
 
     // Build query with Supabase
     let query = db.tiles().select('*')
