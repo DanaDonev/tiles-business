@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div>
+    <>
       {/* Hero Section */}
       <section className="gradient-primary text-white py-20 md:py-32">
         <div className="container-custom text-center">
@@ -36,14 +36,13 @@ export default function Home() {
               { title: 'Kitchen', desc: 'Durable & stylish designs', icon: '🍳' },
               { title: 'Outdoors', desc: 'Weather-resistant options', icon: '🌳' }
             ].map((cat) => (
-             /* <Link key={cat.title} href={`/tiles?type=${cat.title.toUpperCase()}`}>
+              <Link key={cat.title} href={`/tiles?type=${cat.title.toUpperCase()}`}>
                 <div className="bg-white rounded-lg p-8 text-center hover:shadow-lg transition cursor-pointer">
                   <div className="text-5xl mb-4">{cat.icon}</div>
                   <h3 className="text-xl font-semibold mb-2">{cat.title}</h3>
                   <p className="text-gray-600">{cat.desc}</p>
                 </div>
               </Link>
-              */
             ))}
           </div>
         </div>
@@ -107,11 +106,11 @@ export default function Home() {
           <p className="text-lg mb-8 text-purple-100 max-w-2xl mx-auto">
             Join thousands of satisfied customers who have transformed their spaces with TilesPro.
           </p>
-          <Link href="/" className="inline-block px-8 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:shadow-lg transition">
+          <Link href="/tiles" className="inline-block px-8 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:shadow-lg transition">
             Start Browsing Now
           </Link>
         </div>
       </section>
-    </div>
+    </>
   )
 }
