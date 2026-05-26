@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import FilterBar from '@/components/FilterBar'
 import TileGrid from '@/components/TileGrid'
+import { Suspense } from "react";
 
 interface Tile {
   id: string
@@ -53,6 +54,7 @@ export default function TilesPage() {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container-custom">
         <h1 className="text-4xl font-bold mb-2">Browse Our Collection</h1>
@@ -77,5 +79,6 @@ export default function TilesPage() {
         </div>
       </div>
     </div>
+    </Suspense>
   )
 }
